@@ -125,7 +125,6 @@ use strict;
 use Symbol;
 use POSIX qw(dup);
 use IO::Handle;
-use Bio::Root::HTTPget;
 
 use base qw(Bio::Root::Root);
 
