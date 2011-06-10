@@ -400,7 +400,7 @@ sub test_input_file {
 sub test_network {
     require Module::Build;
     my $build = Module::Build->current();
-    return $build->notes('network');
+    return $ENV{AUTHOR_TESTING} || $ENV{RELEASE_TESTING};
 }
 
 =head2 test_email
@@ -417,7 +417,7 @@ sub test_email {
     require Module::Build;
     my $build = Module::Build->current();
     # this should not be settable unless the network tests work
-    return $build->notes('email');
+    return $ENV{AUTHOR_TESTING} || $ENV{RELEASE_TESTING};
 }
 
 =head2 test_debug
