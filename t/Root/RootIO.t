@@ -7,7 +7,7 @@ BEGIN {
     use lib '.';
     use Bio::Root::Test;
 
-    test_begin(-tests => 69);
+    test_begin(-tests => 65);
 
     use_ok('Bio::Root::IO');
 }
@@ -197,21 +197,6 @@ SKIP: {
     isa_ok($f->(), 'Bio::Root::IO');
 }
 
-
-##############################################
-# tests http retrieval
-##############################################
-
-SKIP: {
-  test_skip(-tests => 2, -requires_networking => 1);
-
-  my $TESTURL = 'http://www.google.com/index.html';
-  
-  ok $rio = Bio::Root::IO->new(-url=>$TESTURL), 'default -url method';
-  
-  $Bio::Root::IO::HAS_LWP = 0;
-  lives_ok {$rio = Bio::Root::IO->new(-url=>$TESTURL)};
-}
 
 ##############################################
 # test -string
