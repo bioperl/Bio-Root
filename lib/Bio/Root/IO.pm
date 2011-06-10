@@ -117,7 +117,7 @@ our ($FILESPECLOADED,   $FILETEMPLOADED,
     $FILEPATHLOADED,    $TEMPDIR,
     $PATHSEP,           $ROOTDIR,
     $OPENFLAGS,         $VERBOSE,
-    $ONMAC,             $HAS_LWP,
+    $ONMAC,
     $HAS_EOL);
 
 use strict;
@@ -147,16 +147,6 @@ BEGIN {
     if( $@ ) {
         print STDERR "Cannot load File::Path: $@" if( $VERBOSE > 0 );
         # do nothing
-    }
-
-    eval {
-        require LWP::UserAgent;
-    };
-    if( $@ ) {
-        print STDERR "Cannot load LWP::UserAgent: $@" if( $VERBOSE > 0 );
-        $HAS_LWP = 0;
-    } else {
-        $HAS_LWP = 1;
     }
 
     # If on Win32, attempt to find Win32 package
@@ -283,33 +273,26 @@ sub _initialize_io {
 
     if($url){
         $retries ||= 5;
+
+        require LWP::UserAgent;
+        my $ua = LWP::UserAgent->new(%$ua_parms);
+        my $http_result;
+        my($handle,$tempfile) = $self->tempfile();
+        CORE::close($handle);
     
-        if($HAS_LWP) { #use LWP::UserAgent
-            require LWP::UserAgent;
-            my $ua = LWP::UserAgent->new(%$ua_parms);
-            my $http_result;
-            my($handle,$tempfile) = $self->tempfile();
-            CORE::close($handle);
-          
-    
-            for(my $try = 1 ; $try <= $retries ; $try++){
-                $http_result = $ua->get($url, ':content_file' => $tempfile);
-                $self->warn("[$try/$retries] tried to fetch $url, but server ".
-                            "threw ". $http_result->code . ".  retrying...")
-                            if !$http_result->is_success;
-                last if $http_result->is_success;
-            }
-            $self->throw("failed to fetch $url, server threw ".
-                         $http_result->code) if !$http_result->is_success;
-    
-            $input = $tempfile;
-            $file  = $tempfile;
-        } else { #use Bio::Root::HTTPget
-            #$self->warn("no lwp");
-    
-            $fh = Bio::Root::HTTPget::getFH($url);
+        for (my $try = 1 ; $try <= $retries ; $try++) {
+            $http_result = $ua->get($url, ':content_file' => $tempfile);
+            $self->warn("[$try/$retries] tried to fetch $url, but server ".
+                    "threw ". $http_result->code . ".  retrying...")
+        if !$http_result->is_success;
+            last if $http_result->is_success;
         }
-        }
+        $self->throw("failed to fetch $url, server threw ".
+                 $http_result->code) if !$http_result->is_success;
+    
+        $input = $tempfile;
+        $file  = $tempfile;
+    }
 
     delete $self->{'_readbuffer'};
     delete $self->{'_filehandle'};
