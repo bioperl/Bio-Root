@@ -398,8 +398,6 @@ sub test_input_file {
 =cut
 
 sub test_network {
-    require Module::Build;
-    my $build = Module::Build->current();
     return $ENV{AUTHOR_TESTING} || $ENV{RELEASE_TESTING};
 }
 
@@ -414,9 +412,6 @@ sub test_network {
 =cut
 
 sub test_email {
-    require Module::Build;
-    my $build = Module::Build->current();
-    # this should not be settable unless the network tests work
     return $ENV{AUTHOR_TESTING} || $ENV{RELEASE_TESTING};
 }
 
