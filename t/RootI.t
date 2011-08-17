@@ -7,10 +7,10 @@ BEGIN {
     use lib '.';
     use Bio::Root::Test;
     
-    test_begin(-tests => 63);
+    test_begin(-tests => 62);
 	
 	use_ok('Bio::Root::Root');
-    use_ok('Bio::Seq');
+    
 }
 
 ok my $obj = Bio::Root::Root->new();
@@ -79,7 +79,7 @@ my $verbobj = Bio::Root::Root->new(-verbose=>1,-strict=>1);
 is $verbobj->verbose(), 1;
 
 $Bio::Root::Root::DEBUG = 1;
-my $seq = Bio::Seq->new();
+my $seq = Bio::Root::Root->new();
 is $seq->verbose, 1;
 
 # test for bug #1343
