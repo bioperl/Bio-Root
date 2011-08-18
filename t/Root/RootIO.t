@@ -7,7 +7,7 @@ BEGIN {
     use lib '.';
     use Bio::Root::Test;
 
-    test_begin(-tests => 65);
+    test_begin(-tests => 67);
 
     use_ok('Bio::Root::IO');
 }
