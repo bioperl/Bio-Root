@@ -248,7 +248,7 @@ sub deprecated{
         ${"${class}::VERSION"}
     };
 
-    if( $class_version =~ /set by/ ) {
+    if( $class_version && $class_version =~ /set by/ ) {
         $class_version = 0.0001;
     }
 
