@@ -1,7 +1,7 @@
 #
 # BioPerl module for Bio::Root::IO
 #
-# Please direct questions and support issues to <bioperl-l@bioperl.org> 
+# Please direct questions and support issues to <bioperl-l@bioperl.org>
 #
 # Cared for by Hilmar Lapp <hlapp@gmx.net>
 #
@@ -52,7 +52,7 @@ In addition this module contains a couple of convenience methods for
 cross-platform safe tempfile creation and similar tasks. There are
 some CPAN modules related that may not be available on all
 platforms. At present, File::Spec and File::Temp are attempted. This
-module defines $PATHSEP, $TEMPDIR, and $ROOTDIR, which will always be set, 
+module defines $PATHSEP, $TEMPDIR, and $ROOTDIR, which will always be set,
 and $OPENFLAGS, which will be set if either of File::Spec or File::Temp fails.
 
 The -noclose boolean (accessed via the noclose method) prevents a
@@ -74,15 +74,15 @@ Your participation is much appreciated.
   bioperl-l@bioperl.org                  - General discussion
   http://bioperl.org/wiki/Mailing_lists  - About the mailing lists
 
-=head2 Support 
+=head2 Support
 
 Please direct usage questions or support issues to the mailing list:
 
 I<bioperl-l@bioperl.org>
 
-rather than to the module maintainer directly. Many experienced and 
-reponsive experts will be able look at the problem and quickly 
-address it. Please include a thorough description of the problem 
+rather than to the module maintainer directly. Many experienced and
+reponsive experts will be able look at the problem and quickly
+address it. Please include a thorough description of the problem
 with code and data examples if at all possible.
 
 =head2 Reporting Bugs
@@ -139,10 +139,10 @@ BEGIN {
     $VERBOSE = 0;
 
     # try to load those modules that may cause trouble on some systems
-    eval { 
+    eval {
         require File::Path;
         $FILEPATHLOADED = 1;
-    }; 
+    };
     if( $@ ) {
         print STDERR "Cannot load File::Path: $@" if( $VERBOSE > 0 );
         # do nothing
@@ -174,7 +174,7 @@ BEGIN {
         require File::Temp; # tempfile creation
         $FILETEMPLOADED = 1;
     };
-    if( $@ ) { 
+    if( $@ ) {
     if(! defined($TEMPDIR)) { # File::Spec failed
         # determine tempdir
         if (defined $ENV{'TEMPDIR'} && -d $ENV{'TEMPDIR'} ) {
@@ -214,8 +214,8 @@ BEGIN {
 
 =head2 new
 
- Title   : new 
- Usage   : 
+ Title   : new
+ Usage   :
  Function: Overridden here to automatically call _initialize_io().
  Example :
  Returns : new instance of this class
@@ -248,8 +248,8 @@ sub new {
               -noclose  boolean flag, when set to true will not close a
                         filehandle (must explicitly call close($io->_fh)
               -retries  number of times to try a web fetch before failure
-                        
-              -ua_parms hashref of key => value parameters to pass 
+
+              -ua_parms hashref of key => value parameters to pass
                         to LWP::UserAgent->new()
                         (only meaningful with -url is set)
                         A useful value might be, for example,
@@ -266,7 +266,7 @@ sub _initialize_io {
     $self->_register_for_cleanup(\&_io_cleanup);
 
     my ($input, $noclose, $file, $fh, $string, $flush, $url,
-    $retries, $ua_parms) = 
+    $retries, $ua_parms) =
     $self->_rearrange([qw(INPUT NOCLOSE FILE FH STRING FLUSH URL RETRIES UA_PARMS)],
                       @args);
 
@@ -278,7 +278,7 @@ sub _initialize_io {
         my $http_result;
         my($handle,$tempfile) = $self->tempfile();
         CORE::close($handle);
-    
+
         for (my $try = 1 ; $try <= $retries ; $try++) {
             $http_result = $ua->get($url, ':content_file' => $tempfile);
             $self->warn("[$try/$retries] tried to fetch $url, but server ".
@@ -288,7 +288,7 @@ sub _initialize_io {
         }
         $self->throw("failed to fetch $url, server threw ".
                  $http_result->code) if !$http_result->is_success;
-    
+
         $input = $tempfile;
         $file  = $tempfile;
     }
@@ -314,7 +314,7 @@ sub _initialize_io {
                  "not string and not GLOB");
         }
     }
-    
+
     if(defined($file) && defined($fh)) {
         $self->throw("Providing both a file and a filehandle for reading - ".
                      "only one please!");
@@ -327,7 +327,7 @@ sub _initialize_io {
         }
         open($fh, "<", \$string)
     }
-    
+
     if(defined($file) && ($file ne '')) {
         $fh = Symbol::gensym();
         open ($fh,$file) || $self->throw("Could not open $file: $!");
@@ -340,8 +340,8 @@ sub _initialize_io {
         # an IO::Handle or IO::String object
         # the UNIVERSAL::can added to fix Bug2863
         unless ( ( ref $fh && ( ref $fh eq 'GLOB' ) )
-                 || ( ref $fh && ( UNIVERSAL::can( $fh, 'can' ) 
-                    && ( $fh->isa('IO::Handle') || $fh->isa('IO::String') ) ) ) 
+                 || ( ref $fh && ( UNIVERSAL::can( $fh, 'can' )
+                    && ( $fh->isa('IO::Handle') || $fh->isa('IO::String') ) ) )
                ) {
             $self->throw("file handle $fh doesn't appear to be a handle");
         }
@@ -397,7 +397,7 @@ sub mode {
     my ($obj, @arg) = @_;
     my %param = @arg;
     return $obj->{'_mode'} if defined $obj->{'_mode'} and !$param{-force};
-    
+
     # Previous system of:
     #  my $iotest = new IO::Handle;
     #  $iotest->fdopen( dup(fileno($fh)) , 'r' );
@@ -407,9 +407,9 @@ sub mode {
     # hacked around when dealing with unseekable (piped) filehandles.
     #
     # Just try and do a simple readline, turning io warnings off, instead:
-    
+
     my $fh = $obj->_fh || return '?';
-    
+
     no warnings "io"; # we expect a warning if this is writable only
     my $line = <$fh>;
     if (defined $line) {
@@ -419,7 +419,7 @@ sub mode {
     else {
         $obj->{'_mode'} = 'w';
     }
-    
+
     return $obj->{'_mode'};
 }
 
@@ -586,7 +586,7 @@ sub _insert {
            passing (-raw => 1) prevents \r\n sequences from being changed
            to \n.  The default value of -raw is undef, allowing \r\n to be
            converted to \n.
- Returns : 
+ Returns :
 
 =cut
 
@@ -603,7 +603,7 @@ sub _readline {
     } else {
     $line = <$fh>;
     }
-    
+
     #don't strip line endings if -raw is specified
     # $line =~ s/\r\n/\n/g if( (!$param{-raw}) && (defined $line) );
     # Dave Howorth's fix
@@ -630,9 +630,9 @@ sub _readline {
 =cut
 
 # fix for bug 843, this reveals some unsupported behavior
-    
+
 #sub _pushback {
-#    my ($obj, $value) = @_;    
+#    my ($obj, $value) = @_;
 #    if (index($value, $/) >= 0) {
 #        push @{$obj->{'_readbuffer'}}, $value;
 #    } else {
@@ -691,7 +691,7 @@ sub close {
 
 sub flush {
   my ($self) = shift;
-  
+
   if( !defined $self->{'_filehandle'} ) {
     $self->throw("Attempting to call flush but no filehandle active");
   }
@@ -712,7 +712,7 @@ sub flush {
  Function: Get/Set the NOCLOSE flag - setting this to true will
            prevent a filehandle from being closed
            when an object is cleaned up or explicitly closed
-           This is a bit of hack 
+           This is a bit of hack
  Returns : value of noclose (a scalar)
  Args    : on set, new value (a scalar or undef, optional)
 
@@ -731,12 +731,12 @@ sub _io_cleanup {
     $self->close();
     my $v = $self->verbose;
 
-    # we are planning to cleanup temp files no matter what    
+    # we are planning to cleanup temp files no matter what
     if( exists($self->{'_rootio_tempfiles'}) &&
     ref($self->{'_rootio_tempfiles'}) =~ /array/i &&
-    !$self->save_tempfiles) { 
+    !$self->save_tempfiles) {
     if( $v > 0 ) {
-        warn( "going to remove files ", 
+        warn( "going to remove files ",
           join(",",  @{$self->{'_rootio_tempfiles'}}), "\n");
     }
     unlink  (@{$self->{'_rootio_tempfiles'}} );
@@ -745,9 +745,9 @@ sub _io_cleanup {
     if( $self->{'_cleanuptempdir'} &&
     exists($self->{'_rootio_tempdirs'}) &&
     ref($self->{'_rootio_tempdirs'}) =~ /array/i &&
-    !$self->save_tempfiles) {   
+    !$self->save_tempfiles) {
     if( $v > 0 ) {
-        warn( "going to remove dirs ", 
+        warn( "going to remove dirs ",
           join(",",  @{$self->{'_rootio_tempdirs'}}), "\n");
     }
     $self->rmtree( $self->{'_rootio_tempdirs'});
@@ -795,14 +795,14 @@ sub exists_exe {
 =head2 tempfile
 
  Title   : tempfile
- Usage   : my ($handle,$tempfile) = $io->tempfile(); 
+ Usage   : my ($handle,$tempfile) = $io->tempfile();
  Function: Returns a temporary filename and a handle opened for writing and
            and reading.
 
  Caveats : If you do not have File::Temp on your system you should avoid
            specifying TEMPLATE and SUFFIX. (We don't want to recode
            everything, okay?)
- Returns : a 2-element array, consisting of temporary handle and temporary 
+ Returns : a 2-element array, consisting of temporary handle and temporary
            file name
  Args    : named parameters compatible with File::Temp: DIR (defaults to
            $Bio::Root::IO::TEMPDIR), TEMPLATE, SUFFIX.
@@ -821,20 +821,20 @@ sub tempfile {
         my $v = $params{$key};
         delete $params{$key};
         $params{uc(substr($key,1))} = $v;
-    } else { 
+    } else {
         # this is to upper case
         my $v = $params{$key};
-        delete $params{$key};       
+        delete $params{$key}; 
         $params{uc($key)} = $v;
     }
     }
     $params{'DIR'} = $TEMPDIR if(! exists($params{'DIR'}));
-    unless (exists $params{'UNLINK'} && 
+    unless (exists $params{'UNLINK'} &&
         defined $params{'UNLINK'} &&
         ! $params{'UNLINK'} ) {
     $params{'UNLINK'} = 1;
     } else { $params{'UNLINK'} = 0 }
-        
+  
     if($FILETEMPLOADED) {
     if(exists($params{'TEMPLATE'})) {
         my $template = $params{'TEMPLATE'};
@@ -848,8 +848,8 @@ sub tempfile {
     $file = $self->catfile($dir,
                    (exists($params{'TEMPLATE'}) ?
                 $params{'TEMPLATE'} :
-                sprintf( "%s.%s.%s",  
-                     $ENV{USER} || 'unknown', $$, 
+                sprintf( "%s.%s.%s",
+                     $ENV{USER} || 'unknown', $$,
                      $TEMPCOUNTER++)));
 
     # sneakiness for getting around long filenames on Win32?
@@ -860,7 +860,7 @@ sub tempfile {
     # Try to make sure this will be marked close-on-exec
     # XXX: Win32 doesn't respect this, nor the proper fcntl,
     #      but may have O_NOINHERIT. This may or may not be in Fcntl.
-    local $^F = 2; 
+    local $^F = 2;
     # Store callers umask
     my $umask = umask();
     # Set a known umaskr
@@ -868,15 +868,15 @@ sub tempfile {
     # Attempt to open the file
     if ( sysopen($tfh, $file, $OPENFLAGS, 0600) ) {
         # Reset umask
-        umask($umask); 
-    } else { 
+        umask($umask);
+    } else {
         $self->throw("Could not open tempfile $file: $!\n");
     }
     }
 
     if(  $params{'UNLINK'} ) {
     push @{$self->{'_rootio_tempfiles'}}, $file;
-    } 
+    }
 
 
     return wantarray ? ($tfh,$file) : $tfh;
@@ -885,7 +885,7 @@ sub tempfile {
 =head2  tempdir
 
  Title   : tempdir
- Usage   : my ($tempdir) = $io->tempdir(CLEANUP=>1); 
+ Usage   : my ($tempdir) = $io->tempdir(CLEANUP=>1);
  Function: Creates and returns the name of a new temporary directory.
 
            Note that you should not use this function for obtaining "the"
@@ -893,14 +893,16 @@ sub tempfile {
            method will in fact create a new directory.
 
  Returns : The name of a new temporary directory.
- Args    : args - ( key CLEANUP ) indicates whether or not to cleanup 
+ Args    : args - ( key CLEANUP ) indicates whether or not to cleanup
            dir on object destruction, other keys as specified by File::Temp
 
 =cut
 
 sub tempdir {
     my ( $self, @args ) = @_;
+    print "at root::io::tempdir\n";
     if($FILETEMPLOADED && File::Temp->can('tempdir') ) {
+        print "howdy\n";
     return File::Temp::tempdir(@args);
     }
 
@@ -908,14 +910,15 @@ sub tempdir {
     #
     # we are planning to cleanup temp files no matter what
     my %params = @args;
-    $self->{'_cleanuptempdir'} = ( defined $params{CLEANUP} && 
+    print "cleanup is " . $params{CLEANUP} . "\n";
+    $self->{'_cleanuptempdir'} = ( defined $params{CLEANUP} &&
                    $params{CLEANUP} == 1);
     my $tdir = $self->catfile($TEMPDIR,
-                  sprintf("dir_%s-%s-%s", 
-                      $ENV{USER} || 'unknown', $$, 
+                  sprintf("dir_%s-%s-%s",
+                      $ENV{USER} || 'unknown', $$,
                       $TEMPCOUNTER++));
     mkdir($tdir, 0755);
-    push @{$self->{'_rootio_tempdirs'}}, $tdir; 
+    push @{$self->{'_rootio_tempdirs'}}, $tdir;
     return $tdir;
 }
 
@@ -961,7 +964,7 @@ sub catfile {
            If File::Path exists on your system, this routine will merely
            delegate to it. Otherwise it runs a local version of that code.
 
-           You should use this method to remove directories which contain 
+           You should use this method to remove directories which contain
            files.
 
            You can call this method both as a class and an instance method.
@@ -989,7 +992,7 @@ sub catfile {
 # taken straight from File::Path VERSION = "1.0403"
 sub rmtree {
     my($self,$roots, $verbose, $safe) = @_;
-    if( $FILEPATHLOADED ) { 
+    if( $FILEPATHLOADED ) {
     return File::Path::rmtree ($roots, $verbose, $safe);
     }
 
@@ -1016,7 +1019,7 @@ sub rmtree {
     if ( -d _ ) {
         # notabene: 0777 is for making readable in the first place,
         # it's also intended to change it to writable in case we have
-        # to recurse in which case we are better than rm -rf for 
+        # to recurse in which case we are better than rm -rf for
         # subtrees with strange permissions
         chmod(0777, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
           or $self->warn("Can't make directory $root read+writable: $!")
@@ -1030,7 +1033,7 @@ sub rmtree {
         }
 
         # Deleting large numbers of files from VMS Files-11 filesystems
-        # is faster if done in reverse ASCIIbetical order 
+        # is faster if done in reverse ASCIIbetical order
         @files = reverse @files if $Is_VMS;
         ($root = VMS::Filespec::unixify($root)) =~ s#\.dir\z## if $Is_VMS;
         @files = map("$root/$_", grep $_!~/^\.{1,2}\z/s,@files);
@@ -1091,8 +1094,8 @@ sub rmtree {
 
  Title   : _flush_on_write
  Usage   : $obj->_flush_on_write($newval)
- Function: Boolean flag to indicate whether to flush 
-           the filehandle on writing when the end of 
+ Function: Boolean flag to indicate whether to flush
+           the filehandle on writing when the end of
            a component is finished (Sequences,Alignments,etc)
  Returns : value of _flush_on_write
  Args    : newvalue (optional)
