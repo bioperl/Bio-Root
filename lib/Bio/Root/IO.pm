@@ -900,10 +900,8 @@ sub tempfile {
 
 sub tempdir {
     my ( $self, @args ) = @_;
-    print "at root::io::tempdir\n";
     if($FILETEMPLOADED && File::Temp->can('tempdir') ) {
-        print "howdy\n";
-    return File::Temp::tempdir(@args);
+        return File::Temp::tempdir(@args);
     }
 
     # we have to do this ourselves, not good
