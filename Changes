@@ -2,5 +2,7 @@ Summary of important user-visible changes for Bio-Root
 ------------------------------------------------------
 
 {{$NEXT}}
+
+1.70      2013-04-02 04:57:46 Europe/Dublin
   * Bio::Root::Root
     - Support of Clone::Fast as a faster cloning alternative [fangly]
