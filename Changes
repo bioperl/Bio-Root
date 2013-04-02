@@ -2,7 +2,10 @@ Summary of important user-visible changes for Bio-Root
 ------------------------------------------------------
 
 {{$NEXT}}
-
-1.70      2013-04-02 04:57:46 Europe/Dublin
+  * First release as an independent distribution, after split from bioperl-live.
   * Bio::Root::Root
     - Support of Clone::Fast as a faster cloning alternative [fangly]
+  * Bio::Root::IO
+    - Moved the format() and variant() methods from Bio::*IO modules to
+      Bio::Root::IO [fangly]
+    - Can now use format() to get the type of IO format in use [fangly]
