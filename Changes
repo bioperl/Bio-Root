@@ -1,2 +1,6 @@
+Summary of important user-visible changes for Bio-Root
+------------------------------------------------------
+
+{{$NEXT}}
   * Bio::Root::Root
     - Support of Clone::Fast as a faster cloning alternative [fangly]
