@@ -15,7 +15,7 @@ use base qw(Bio::Root::Root);
 
 =head1 SYNOPSIS
 
-    # utilize stream I/O in your module
+    # Use stream I/O in your module
     $self->{'io'} = Bio::Root::IO->new(-file => "myfile");
     $self->{'io'}->_print("some stuff");
     my $line = $self->{'io'}->_readline();
@@ -99,7 +99,7 @@ BEGIN {
 
     # Try to provide a path separator. Why doesn't File::Spec export this,
     # or did I miss it?
-    if($^O =~ /mswin/i) {
+    if ($^O =~ /mswin/i) {
         $PATHSEP = "\\";
     } elsif($^O =~ /macos/i) {
         $PATHSEP = ":";
@@ -152,11 +152,10 @@ BEGIN {
 =head2 new
 
  Title   : new
- Usage   :
+ Usage   : my $io = Bio::Root::IO->new( -file => 'data.txt' );
  Function: Create new class instance. It automatically calls C<_initialize_io>.
- Example :
- Returns : A Bio::Root::IO object
  Args    : Same named parameters as C<_initialize_io>.
+ Returns : A Bio::Root::IO object
 
 =cut
 
@@ -171,9 +170,9 @@ sub new {
 =head2 _initialize_io
 
  Title   : _initialize_io
- Usage   : $self->_initialize_io(@params);
+ Usage   : $io->_initialize_io(@params);
  Function: Initializes filehandle and other properties from the parameters.
-           The following named parameters are currently recognized:
+ Args    : The following named parameters are currently recognized:
               -file     name of file to read or write to
               -fh       file handle to read or write to (mutually exclusive
                         with -file and -string)
@@ -188,8 +187,7 @@ sub new {
               -ua_parms when using -url, hashref of key => value parameters
                         to pass to LWP::UserAgent->new(). A useful value might
                         be, for example, {timeout => 60 } (ua defaults to 180s)
- Returns : TRUE
- Args    : named parameters
+ Returns : True
 
 =cut
 
@@ -293,11 +291,10 @@ sub _initialize_io {
 =head2 _fh
 
  Title   : _fh
- Usage   : $obj->_fh($newval);
- Function: Get/set the file handle for the stream encapsulated.
- Example :
+ Usage   : $io->_fh($newval);
+ Function: Get or set the file handle for the stream encapsulated.
+ Args    : Optional filehandle to use
  Returns : Filehandle for the stream
- Args    : Optional new filehandle to use
 
 =cut
 
@@ -313,18 +310,17 @@ sub _fh {
 =head2 mode
 
  Title   : mode
- Usage   : $obj->mode();
-           $obj->mode(-force => 1);
+ Usage   : $io->mode();
+           $io->mode(-force => 1);
  Function: Determine if the object was opened for reading or writing
- Example :
+ Args    : -force: Boolean. Once mode() has been called, the mode is cached for
+                   further calls to mode(). Use this argument to override this
+                   behavior and re-check the object's mode.
  Returns : Mode of the object:
             'r'  for readable
             'w'  for writable
             'rw' for readable and writable
             '?'  if mode could not be determined (e.g. for a -url)
- Args    : -force: Boolean. Once mode() has been called, the mode is cached for
-                   further calls to mode(). Use this argument to override this
-                   behavior and re-check the object's mode.
 
 =cut
 
@@ -378,18 +374,17 @@ sub mode {
 =head2 file
 
  Title   : file
- Usage   : $obj->file($newval)
- Function: Get/set the filename, if one has been designated.
- Example :
- Returns : value of file
- Args    : newvalue (optional)
+ Usage   : $io->file($newval)
+ Function: Get or set the name of the file to read or write.
+ Args    : Optional file name
+ Returns : File name
 
 =cut
 
 sub file {
     my ($obj, $value) = @_;
     if ( defined $value) {
-    $obj->{'_file'} = $value;
+        $obj->{'_file'} = $value;
     }
     return $obj->{'_file'};
 }
@@ -398,11 +393,11 @@ sub file {
 =head2 format
 
  Title   : format
- Usage   : $self->format($newval)
+ Usage   : $io->format($newval)
  Function: Get the format of a Bio::Root::IO sequence file or filehandle. Every
            object inheriting Bio::Root::IO is guaranteed to have a format.
- Returns : format of the file or filehandle, e.g. fasta, fastq, genbank, embl.
- Args    : none
+ Args    : None
+ Returns : Format of the file or filehandle, e.g. fasta, fastq, genbank, embl.
 
 =cut
 
@@ -416,15 +411,15 @@ sub format {
 =head2 variant
 
  Title   : format
- Usage   : $self->format($newval)
+ Usage   : $io->format($newval)
  Function: Get the variant of a Bio::Root::IO sequence file or filehandle.
-           The format variant depends on the specific format used. Note that not
-           all formats have variants
- Returns : variant of the file or filehandle, e.g. sanger, solexa or illumina for
+           The format variant depends on the specific format used. Note that
+           not all formats have variants. Also, the Bio::Root::IO-implementing
+           modules that require access to variants need to define a global hash
+           that has the allowed variants as its keys.
+ Args    : None
+ Returns : Variant of the file or filehandle, e.g. sanger, solexa or illumina for
            the fastq format, or undef for formats that do not have variants.
- Args    : none
- Note    : The Bio::Root::IO-implementing modules that require access to variants
-           need to define a global hash that has the allowed variants as its keys.
 
 =cut
 
@@ -451,10 +446,10 @@ sub variant {
 =head2 _print
 
  Title   : _print
- Usage   : $obj->_print(@lines)
- Function:
- Example :
- Returns : 1 on success, undef on failure
+ Usage   : $io->_print(@lines)
+ Function: Print lines of text to the IO stream object.
+ Args    : List of strings to print
+ Returns : True on success, undef on failure
 
 =cut
 
@@ -468,12 +463,12 @@ sub _print {
 
 =head2 _insert
 
-    Title   : _insert
-    Usage   : $obj->_insert($string,1)
-    Function: Insert some text in a file at the given line number (1-based).
-    Returns : 1 on success
-    Args    : string to write in file
-              line number to insert the string at
+ Title   : _insert
+ Usage   : $io->_insert($string,1)
+ Function: Insert some text in a file at the given line number (1-based).
+ Args    : * string to write in file
+           * line number to insert the string at
+ Returns : True
 
 =cut
 
@@ -526,7 +521,7 @@ sub _insert {
 =head2 _readline
 
  Title   : _readline
- Usage   : $obj->_readline(%args)
+ Usage   : $io->_readline(%args)
  Function: Reads a line of input.
 
            Note that this method implicitly uses the value of $/ that is
@@ -536,18 +531,16 @@ sub _insert {
            back input correctly unless the pushed back input ends with the
            value of $/.
 
- Example :
- Args    : Accepts a hash of arguments, currently only -raw is recognized
+ Args    : A hash of arguments. Currently only -raw is recognized
            passing (-raw => 1) prevents \r\n sequences from being changed
            to \n.  The default value of -raw is undef, allowing \r\n to be
            converted to \n.
- Returns :
+ Returns : Line of input, or undef when there is nothing to read anymore
 
 =cut
 
 sub _readline {
-    my $self = shift;
-    my %param = @_;
+    my ($self, %param) = @_;
     my $fh = $self->_fh or return;
     my $line;
 
@@ -573,15 +566,17 @@ sub _readline {
 =head2 _pushback
 
  Title   : _pushback
- Usage   : $obj->_pushback($newvalue)
- Function: puts a line previously read with _readline back into a buffer.
+ Usage   : $io->_pushback($newvalue)
+ Function: Puts a line previously read with _readline back into a buffer.
            buffer can hold as many lines as system memory permits.
- Example : $obj->_pushback($newvalue)
- Returns : none
+
+           Note that this is only supported for pushing back data ending with
+           the current, localized value of $/. Using this method to push
+           modified data back onto the buffer stack is not supported; see bug
+           843.
+
  Args    : newvalue
- Note    : This is only supported for pushing back data ending with the
-           current, localized value of $/. Using this method to push modified
-           data back onto the buffer stack is not supported; see bug 843.
+ Returns : True
 
 =cut
 
@@ -600,6 +595,7 @@ sub _pushback {
     my ($obj, $value) = @_;
     return unless $value;
     unshift @{$obj->{'_readbuffer'}}, $value;
+    return 1;
 }
 
 
@@ -607,33 +603,31 @@ sub _pushback {
 
  Title   : close
  Usage   : $io->close()
- Function: Closes the file handle associated with this IO instance.
-           Will not close the FH if  -noclose is specified
- Returns : Return true on success
- Args    : none
+ Function: Closes the file handle associated with this IO instance,
+           excepted if -noclose was specified.
+ Args    : None
+ Returns : True
 
 =cut
 
 sub close {
-   my ($self) = @_;
+    my ($self) = @_;
 
-   # do not close if we explicitly asked not to
-   return if $self->noclose;
+    # do not close if we explicitly asked not to
+    return if $self->noclose;
 
-   if( defined( my $fh = $self->{'_filehandle'} )) {
-       $self->flush;
-       return if     ref $fh eq 'GLOB'
-         && (    \*STDOUT == $fh
-              || \*STDERR == $fh
-              || \*STDIN  == $fh
-                    );
+    if( defined( my $fh = $self->{'_filehandle'} )) {
+        $self->flush;
+        return if ref $fh eq 'GLOB' && (
+            \*STDOUT == $fh || \*STDERR == $fh || \*STDIN  == $fh
+        );
 
-       # don't close IO::Strings
-       close $fh unless ref $fh && $fh->isa('IO::String');
-   }
-   $self->{'_filehandle'} = undef;
-   delete $self->{'_readbuffer'};
-   return 1;
+        # don't close IO::Strings
+        close $fh unless ref $fh && $fh->isa('IO::String');
+    }
+    $self->{'_filehandle'} = undef;
+    delete $self->{'_readbuffer'};
+    return 1;
 }
 
 
@@ -642,8 +636,8 @@ sub close {
  Title   : flush
  Usage   : $io->flush()
  Function: Flushes the filehandle
- Returns : none
- Args    : none
+ Args    : None
+ Returns : True
 
 =cut
 
@@ -661,20 +655,19 @@ sub flush {
     } else {
         $self->{'_filehandle'}->flush();
     }
+    return 1;
 }
 
 
 =head2 noclose
 
  Title   : noclose
- Usage   : $obj->noclose($newval)
- Function: Get/Set the NOCLOSE flag - setting this to true will
-           prevent a filehandle from being closed
-           when an object is cleaned up or explicitly closed
-           This is a bit of hack
- Returns : value of noclose (a scalar)
- Args    : on set, new value (a scalar or undef, optional)
-
+ Usage   : $io->noclose($newval)
+ Function: Get or set the NOCLOSE flag - setting this to true will prevent a
+           filehandle from being closed when an object is cleaned up or
+           explicitly closed.
+ Args    : Optional new value (a scalar or undef)
+ Returns : Value of noclose (a scalar)
 
 =cut
 
@@ -721,7 +714,7 @@ sub _io_cleanup {
 =head2 exists_exe
 
  Title   : exists_exe
- Usage   : $exists = $obj->exists_exe('clustalw');
+ Usage   : $exists = $io->exists_exe('clustalw');
            $exists = Bio::Root::IO->exists_exe('clustalw')
            $exists = Bio::Root::IO::exists_exe('clustalw')
  Function: Determines whether the given executable exists either as file
@@ -729,9 +722,8 @@ sub _io_cleanup {
            to be installed.
            On Win32-based system, .exe is automatically appended to the program
            name unless the program name already ends in .exe.
- Example :
+ Args    : Name of the executable
  Returns : 1 if the given program is callable as an executable, and 0 otherwise
- Args    : the name of the executable
 
 =cut
 
@@ -761,15 +753,14 @@ sub exists_exe {
 
  Title   : tempfile
  Usage   : my ($handle,$tempfile) = $io->tempfile();
- Function: Returns a temporary filename and a handle opened for reading and
+ Function: Create a temporary filename and a handle opened for reading and
            writing.
- Caveats : If you do not have File::Temp on your system you should avoid
-           specifying TEMPLATE and SUFFIX. (We don't want to recode
-           everything, okay?)
- Returns : a 2-element array, consisting of temporary handle and temporary
-           file name
- Args    : named parameters compatible with File::Temp: DIR (defaults to
+           Caveats: If you do not have File::Temp on your system you should
+           avoid specifying TEMPLATE and SUFFIX.
+ Args    : Named parameters compatible with File::Temp: DIR (defaults to
            $Bio::Root::IO::TEMPDIR), TEMPLATE, SUFFIX.
+ Returns : A 2-element array, consisting of temporary handle and temporary
+           file name.
 
 =cut
 
@@ -858,20 +849,19 @@ sub tempfile {
            temp directory. Use $Bio::Root::IO::TEMPDIR for that. Calling this
            method will in fact create a new directory.
 
- Returns : The name of a new temporary directory.
  Args    : args - ( key CLEANUP ) indicates whether or not to cleanup
            dir on object destruction, other keys as specified by File::Temp
+ Returns : The name of a new temporary directory.
 
 =cut
 
 sub tempdir {
-    my ( $self, @args ) = @_;
-    if($FILETEMPLOADED && File::Temp->can('tempdir') ) {
+    my ($self, @args) = @_;
+    if ($FILETEMPLOADED && File::Temp->can('tempdir')) {
         return File::Temp::tempdir(@args);
     }
 
     # we have to do this ourselves, not good
-    #
     # we are planning to cleanup temp files no matter what
     my %params = @args;
     print "cleanup is " . $params{CLEANUP} . "\n";
@@ -890,7 +880,7 @@ sub tempdir {
 =head2 catfile
 
  Title   : catfile
- Usage   : $path = Bio::Root::IO->catfile(@dirs,$filename);
+ Usage   : $path = Bio::Root::IO->catfile(@dirs, $filename);
  Function: Constructs a full pathname in a cross-platform safe way.
 
            If File::Spec exists on your system, this routine will merely
@@ -902,9 +892,9 @@ sub tempdir {
 
            You can call this method both as a class and an instance method.
 
- Returns : a string
  Args    : components of the pathname (directories and filename, NOT an
            extension)
+ Returns : a string
 
 =cut
 
@@ -935,7 +925,6 @@ sub catfile {
 
            You can call this method both as a class and an instance method.
 
- Returns : number of files successfully deleted
  Args    : roots - rootdir to delete or reference to list of dirs
 
            verbose - a boolean value, which if TRUE will cause
@@ -952,13 +941,14 @@ sub catfile {
                   future when a criterion for 'delete permission'
                   under OSs other than VMS is settled.  (defaults to
                   FALSE)
+ Returns : number of files successfully deleted
 
 =cut
 
 # taken straight from File::Path VERSION = "1.0403"
 sub rmtree {
-    my($self,$roots, $verbose, $safe) = @_;
-    if( $FILEPATHLOADED ) {
+    my ($self, $roots, $verbose, $safe) = @_;
+    if ( $FILEPATHLOADED ) {
         return File::Path::rmtree ($roots, $verbose, $safe);
     }
 
@@ -978,7 +968,7 @@ sub rmtree {
     }
 
     my $root;
-    foreach $root (@{$roots}) {
+    for $root (@{$roots}) {
         $root =~ s#/\z##;
         (undef, undef, my $rp) = lstat $root or next;
         $rp &= 07777;   # don't forget setuid, setgid, sticky bits
@@ -1060,19 +1050,18 @@ sub rmtree {
 =head2 _flush_on_write
 
  Title   : _flush_on_write
- Usage   : $obj->_flush_on_write($newval)
+ Usage   : $io->_flush_on_write($newval)
  Function: Boolean flag to indicate whether to flush
            the filehandle on writing when the end of
-           a component is finished (Sequences,Alignments,etc)
- Returns : value of _flush_on_write
- Args    : newvalue (optional)
-
+           a component is finished (Sequences, Alignments, etc)
+ Args    : Optional new value
+ Returns : Value of _flush_on_write
 
 =cut
 
 sub _flush_on_write {
-    my ($self,$value) = @_;
-    if( defined $value) {
+    my ($self, $value) = @_;
+    if (defined $value) {
         $self->{'_flush_on_write'} = $value;
     }
     return $self->{'_flush_on_write'};
@@ -1082,10 +1071,10 @@ sub _flush_on_write {
 =head2 save_tempfiles
 
  Title   : save_tempfiles
- Usage   : $obj->save_tempfiles(1)
+ Usage   : $io->save_tempfiles(1)
  Function: Boolean flag to indicate whether to retain tempfiles/tempdir
- Returns : Boolean value : 1 = save tempfiles/tempdirs, 0 = remove (default)
  Args    : Value evaluating to TRUE or FALSE
+ Returns : Boolean value : 1 = save tempfiles/tempdirs, 0 = remove (default)
 
 =cut
 
