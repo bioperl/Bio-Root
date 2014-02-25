@@ -11,4 +11,4 @@ Summary of important user-visible changes for Bio-Root
     - Can now use format() to get the type of IO format in use [fangly]
     - More reliable detection of mode() and support for streams opened in
       read+write mode [fangly]
-    - file() now reports filename and mode in array context
+    - New method cleanfile() to report filename stripped of its mode
