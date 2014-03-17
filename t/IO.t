@@ -6,8 +6,8 @@ use warnings;
 BEGIN {
     use lib '.';
     use Bio::Root::Test;
-    test_begin(-tests => 150);
-    use_ok('Bio::Root::IO');
+    test_begin(-tests => 154);
+    use_ok 'Bio::Root::IO';
 }
 
 
@@ -97,26 +97,31 @@ ok my $in_file_2 = Bio::Root::IO->catfile(qw(t data test.txt));
 
 $out_file = test_output_file();
 
+
 # Test with files
 
 ok my $rio = Bio::Root::IO->new( -input => $in_file ), 'Read from file';
 is $rio->file, $in_file;
+is_deeply [$rio->cleanfile], [undef, $in_file];
 is $rio->mode, 'r';
 ok $rio->close;
 
-ok $rio = Bio::Root::IO->new( -file => $in_file );
-is $rio->file, $in_file;
+ok $rio = Bio::Root::IO->new( -file => '<'.$in_file );
+is $rio->file, '<'.$in_file;
+is_deeply [$rio->cleanfile], ['<', $in_file];
 1 while $rio->_readline; # read entire file content
 is $rio->mode, 'r';
 ok $rio->close;
 
 ok my $wio = Bio::Root::IO->new( -file => ">$out_file" ), 'Write to file';
 is $wio->file, ">$out_file";
+is_deeply [$wio->cleanfile], ['>', $out_file];
 is $wio->mode, 'w';
 ok $wio->close;
 
 ok $rio = Bio::Root::IO->new( -file => "+>$out_file" ), 'Read+write to file';
 is $rio->file, "+>$out_file";
+is_deeply [$rio->cleanfile], ['+>', $out_file];
 is $rio->mode, 'rw';
 ok $rio->close;
 
@@ -124,13 +129,13 @@ ok $rio->close;
 # Test with handles
 
 my $in_fh;
-open $in_fh , '<', $in_file  or die "Could not read file $in_file: $!\n", 'Read from GLOB handle';
+open $in_fh , '<', $in_file  or die "Could not read file '$in_file': $!\n", 'Read from GLOB handle';
 ok $rio = Bio::Root::IO->new( -fh => $in_fh );
 is $rio->_fh, $in_fh;
 is $rio->mode, 'r';
 close $in_fh;
 
-open $out_fh, '>', $out_file or die "Could not write file $out_file: $!\n", 'Write to GLOB handle';
+open $out_fh, '>', $out_file or die "Could not write file '$out_file': $!\n", 'Write to GLOB handle';
 ok $wio = Bio::Root::IO->new( -fh => $out_fh );
 is $wio->_fh, $out_fh;
 is $wio->mode, 'w';
@@ -148,8 +153,9 @@ SKIP: {
     ok $wio->close;
 }
 
+
 # Exclusive arguments
-open $in_fh , '<', $in_file  or die "Could not read file $in_file: $!\n", 'Read from GLOB handle';
+open $in_fh , '<', $in_file  or die "Could not read file '$in_file': $!\n", 'Read from GLOB handle';
 throws_ok {$rio = Bio::Root::IO->new( -input => $in_file, -fh     => $in_fh     )} 'Bio::Root::Exception', 'Exclusive arguments';
 throws_ok {$rio = Bio::Root::IO->new( -input => $in_file, -file   => $in_file_2 )} 'Bio::Root::Exception';
 throws_ok {$rio = Bio::Root::IO->new( -input => $in_file, -string => 'abcedf'   )} 'Bio::Root::Exception';
@@ -196,7 +202,7 @@ ok $fio->_print("line 3\n");
 ok $fio->_print("line 4\n");
 ok $fio->close;
 
-open my $checkio, '<', $out_file;
+open my $checkio, '<', $out_file or die "Could not read file '$out_file': $!\n";
 my @content = <$checkio>;
 close $checkio;
 is_deeply \@content, ["line 1\n","insertion at line 2\n","line 2\n","line 3\n","line 4\n"];
@@ -205,7 +211,7 @@ ok $fio = Bio::Root::IO->new(-file=>">$out_file");
 ok $fio->_insert("insertion at line 1\n",1), '_insert in empty file';
 ok $fio->close;
 
-open $checkio, '<', $out_file;
+open $checkio, '<', $out_file or die "Could not read file '$out_file': $!\n";
 @content = <$checkio>;
 close $checkio;
 is_deeply \@content, ["insertion at line 1\n"];
@@ -353,7 +359,7 @@ eval {
     isa_ok $tfh, 'GLOB';
     print $tfh $TEST_STRING;
     close $tfh;
-    open my $IN, '<', $tfile or die "Could not open file $tfile: $!\n";
+    open my $IN, '<', $tfile or die "Could not read file '$tfile': $!\n";
     my $val = join '', <$IN>;
     is $val, $TEST_STRING;
     close $IN;

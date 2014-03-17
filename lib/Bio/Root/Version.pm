@@ -41,7 +41,7 @@ variable set if it's not already.
 
 =cut
 
-our $VERSION = '1.006902'; # pre-1.7
+our $VERSION = '1.006924'; # pre-1.7
 $VERSION = eval $VERSION;
 
 sub import {
@@ -50,10 +50,11 @@ sub import {
     my $pkg = caller($i);
     no strict 'refs';
     while ($pkg) {
-    if ($pkg =~ m/^Bio::/o &&
-        not defined ${$pkg . "::VERSION"}) {
-        ${$pkg . "::VERSION"} = $VERSION;
-    }
+        if (    $pkg =~ m/^Bio::/o
+            and not defined ${$pkg . "::VERSION"}
+            ) {
+            ${$pkg . "::VERSION"} = $VERSION;
+        }
         $pkg = caller(++$i);
     }
 }

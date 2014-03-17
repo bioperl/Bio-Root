@@ -90,12 +90,11 @@ BEGIN {
     }
 
     # If on Win32, attempt to find Win32 package
-
     if($^O =~ /mswin/i) {
-    eval {
-        require Win32;
-        $HAS_WIN32 = 1;
-    };
+        eval {
+            require Win32;
+            $HAS_WIN32 = 1;
+        };
     }
 
     # Try to provide a path separator. Why doesn't File::Spec export this,
@@ -197,10 +196,12 @@ sub _initialize_io {
 
     $self->_register_for_cleanup(\&_io_cleanup);
 
-    my ($input, $noclose, $file, $fh, $string, $flush, $url,
-    $retries, $ua_parms) =
-    $self->_rearrange([qw(INPUT NOCLOSE FILE FH STRING FLUSH URL RETRIES UA_PARMS)],
-                      @args);
+    my ($input, $noclose, $file, $fh, $string,
+        $flush, $url, $retries, $ua_parms) =
+        $self->_rearrange([qw(INPUT NOCLOSE FILE FH STRING FLUSH URL RETRIES UA_PARMS)],
+                          @args);
+
+    my $mode;
 
     if ($url) {
         $retries ||= 5;
@@ -208,21 +209,21 @@ sub _initialize_io {
         require LWP::UserAgent;
         my $ua = LWP::UserAgent->new(%$ua_parms);
         my $http_result;
-        my($handle,$tempfile) = $self->tempfile();
+        my ($handle, $tempfile) = $self->tempfile();
         CORE::close($handle);
 
         for (my $try = 1 ; $try <= $retries ; $try++) {
             $http_result = $ua->get($url, ':content_file' => $tempfile);
             $self->warn("[$try/$retries] tried to fetch $url, but server ".
-                    "threw ". $http_result->code . ".  retrying...")
+                        "threw ". $http_result->code . ".  retrying...")
               if !$http_result->is_success;
             last if $http_result->is_success;
         }
-        $self->throw("failed to fetch $url, server threw ".$http_result->code)
+        $self->throw("Failed to fetch $url, server threw ".$http_result->code)
           if !$http_result->is_success;
 
-        $input = $tempfile;
-        $file  = $tempfile;
+        $file = $tempfile;
+        $mode = '>';
     }
 
     delete $self->{'_readbuffer'};
@@ -232,8 +233,8 @@ sub _initialize_io {
     if ($input) {
         if (ref(\$input) eq 'SCALAR') {
             # we assume that a scalar is a filename
-            if($file && ($file ne $input)) {
-                $self->throw("input file given twice: $file and $input disagree");
+            if ($file && ($file ne $input)) {
+                $self->throw("Input file given twice: '$file' and '$input' disagree");
             }
             $file = $input;
         } elsif (ref($input) &&
@@ -243,7 +244,7 @@ sub _initialize_io {
         } else {
             # let's be strict for now
             $self->throw("Unable to determine type of input $input: ".
-                 "not string and not GLOB");
+                         "not string and not GLOB");
         }
     }
 
@@ -253,7 +254,7 @@ sub _initialize_io {
     }
 
     if ($string) {
-        if(defined($file) || defined($fh)) {
+        if (defined($file) || defined($fh)) {
             $self->throw("File or filehandle provided with -string, ".
                          "please unset if you are using -string as a file");
         }
@@ -261,9 +262,12 @@ sub _initialize_io {
     }
 
     if (defined($file) && ($file ne '')) {
-        $fh = Symbol::gensym();
-        open $fh, $file or $self->throw("Could not open file $file: $!");
         $self->file($file);
+        ($mode, $file) = $self->cleanfile;
+        $mode ||= '<';
+        my $action = ($mode =~ m/>/) ? 'write' : 'read';
+        $fh = Symbol::gensym();
+        open $fh, $mode, $file or $self->throw("Could not $action file '$file': $!");
     }
 
     if (defined $fh) {
@@ -271,9 +275,10 @@ sub _initialize_io {
         # a GLOB reference, as in: open(my $fh, "myfile");
         # an IO::Handle or IO::String object
         # the UNIVERSAL::can added to fix Bug2863
-        unless ( ( ref $fh && ( ref $fh eq 'GLOB' ) )
-                 || ( ref $fh && ( UNIVERSAL::can( $fh, 'can' )
-                    && ( $fh->isa('IO::Handle') || $fh->isa('IO::String') ) ) )
+        unless (   ( ref $fh and ( ref $fh eq 'GLOB' ) )
+                or ( ref $fh and ( UNIVERSAL::can( $fh, 'can' ) )
+                             and (   $fh->isa('IO::Handle')
+                                  or $fh->isa('IO::String') ) )
                ) {
             $self->throw("Object $fh does not appear to be a file handle");
         }
@@ -300,11 +305,11 @@ sub _initialize_io {
 =cut
 
 sub _fh {
-    my ($obj, $value) = @_;
+    my ($self, $value) = @_;
     if ( defined $value) {
-        $obj->{'_filehandle'} = $value;
+        $self->{'_filehandle'} = $value;
     }
-    return $obj->{'_filehandle'};
+    return $self->{'_filehandle'};
 }
 
 
@@ -340,7 +345,7 @@ sub mode {
     #    no warnings "io";
     #    my $line = <$fh>;
     #    if (defined $line) {
-    #       $obj->{'_mode'} = 'r';
+    #       $self->{'_mode'} = 'r';
     #    ...
     # It did not work well either because <> returns undef, i.e. querying the
     # mode() after having read an entire file returned 'w'.
@@ -375,19 +380,38 @@ sub mode {
 =head2 file
 
  Title   : file
- Usage   : $io->file($newval)
+ Usage   : $io->file('>'.$file);
+           my $file = $io->file;
  Function: Get or set the name of the file to read or write.
- Args    : Optional file name
- Returns : File name
+ Args    : Optional file name (including its mode, e.g. '<' for reading or '>'
+           for writing)
+ Returns : A string representing the filename and its mode.
 
 =cut
 
 sub file {
-    my ($obj, $value) = @_;
+    my ($self, $value) = @_;
     if ( defined $value) {
-        $obj->{'_file'} = $value;
+        $self->{'_file'} = $value;
     }
-    return $obj->{'_file'};
+    return $self->{'_file'};
+}
+
+
+=head2 cleanfile
+
+ Title   : cleanfile
+ Usage   : my ($mode, $file) = $io->cleanfile;
+ Function: Get the name of the file to read or write, stripped of its mode
+           ('>', '<', '+>', '>>', etc).
+ Args    : None
+ Returns : In array context, an array of the mode and the clean filename.
+
+=cut
+
+sub cleanfile {
+    my ($self) = @_;
+    return ($self->{'_file'} =~ m/^ (\+?[><]{1,2})? (.*) $/x);
 }
 
 
@@ -431,12 +455,12 @@ sub variant {
         my $var_name = '%'.ref($self).'::variant';
         my %ok_variants = eval $var_name; # e.g. %Bio::Assembly::IO::ace::variant
         if (scalar keys %ok_variants == 0) {
-            $self->throw('Cannot check for validity of variant because global '.
-                "variant $var_name is not set or is empty\n");
+            $self->throw("Could not validate variant because global variant ".
+                         "$var_name was not set or was empty\n");
         }
         if (not exists $ok_variants{$variant}) {
-            $self->throw($variant.' is not a valid variant of the '.$self->format.
-                ' format');
+            $self->throw("$variant is not a valid variant of the " .
+                         $self->format . ' format');
         }
         $self->{variant} = $variant;
     }
@@ -477,16 +501,15 @@ sub _insert {
     my ($self, $string, $line_num) = @_;
     # Line number check
     if ($line_num < 1) {
-        $self->throw("Cannot insert text at line $line_num because the minimum".
-            " line number possible is 1");
+        $self->throw("Could not insert text at line $line_num: the minimum ".
+                     "line number possible is 1.");
     }
     # File check
-    my $file = $self->file;
+    my ($mode, $file) = $self->cleanfile;
     if (not defined $file) {
-        $self->throw('Cannot insert a line in a IO object initialized with ".
-            "anything else than a file.');
+        $self->throw('Could not insert a line: IO object was initialized with '.
+                     'something else than a file.');
     }
-    $file =~ s/^\+?[><]?//; # transform '+>output.ace' into 'output.ace'
     # Everything that needs to be written is written before we read it
     $self->flush;
 
@@ -499,8 +522,8 @@ sub _insert {
     }
     $temp_file = "$file.$number.temp";
     copy($file, $temp_file);
-    open my $fh1, "<$temp_file" or $self->throw("Cannot read file $temp_file: $!");
-    open my $fh2, ">$file"      or $self->throw("Cannot write to file $file: $!");
+    open my $fh1, '<', $temp_file or $self->throw("Could not read temporary file '$temp_file': $!");
+    open my $fh2, '>', $file      or $self->throw("Could not write file '$file': $!");
     while (my $line = <$fh1>) {
         if ($. == $line_num) { # right line for new data
             print $fh2 $string . $line;
@@ -511,16 +534,16 @@ sub _insert {
     }
     CORE::close $fh1;
     CORE::close $fh2;
-    unlink $temp_file or die "Could not delete temporal $temp_file: $!\n";
+    unlink $temp_file or $self->throw("Could not delete temporary file '$temp_file': $!");
 
     # Line number check (again)
     if ( $. > 0 && $line_num > $. ) {
-        $self->throw("Cannot insert text at line $line_num because there are ".
-            "only $. lines in file $file");
+        $self->throw("Could not insert text at line $line_num: there are only ".
+                     "$. lines in file '$file'");
     }
     # Re-open the file in append mode to be ready to add text at the end of it
     # when the next _print() statement comes
-    open my $new_fh, ">>$file" or $self->throw("Cannot append to file $file: $!");
+    open my $new_fh, '>>', $file or $self->throw("Could not append to file '$file': $!");
     $self->_fh($new_fh);
     # If file is empty and we're inserting at line 1, simply append text to file
     if ( $. == 0 && $line_num == 1 ) {
@@ -604,18 +627,18 @@ sub _readline {
 # fix for bug 843, this reveals some unsupported behavior
 
 #sub _pushback {
-#    my ($obj, $value) = @_;
+#    my ($self, $value) = @_;
 #    if (index($value, $/) >= 0) {
-#        push @{$obj->{'_readbuffer'}}, $value;
+#        push @{$self->{'_readbuffer'}}, $value;
 #    } else {
-#        $obj->throw("Pushing modifed data back not supported: $value");
+#        $self->throw("Pushing modifed data back not supported: $value");
 #    }
 #}
 
 sub _pushback {
-    my ($obj, $value) = @_;
+    my ($self, $value) = @_;
     return unless $value;
-    unshift @{$obj->{'_readbuffer'}}, $value;
+    unshift @{$self->{'_readbuffer'}}, $value;
     return 1;
 }
 
@@ -666,7 +689,7 @@ sub flush {
     my ($self) = shift;
 
     if( !defined $self->{'_filehandle'} ) {
-        $self->throw("Attempting to call flush but no filehandle active");
+        $self->throw("Flush failed: no filehandle was active");
     }
 
     if( ref($self->{'_filehandle'}) =~ /GLOB/ ) {
@@ -709,23 +732,27 @@ sub _io_cleanup {
     my $v = $self->verbose;
 
     # we are planning to cleanup temp files no matter what
-    if( exists($self->{'_rootio_tempfiles'}) &&
-      ref($self->{'_rootio_tempfiles'}) =~ /array/i &&
-      !$self->save_tempfiles) {
+    if (    exists($self->{'_rootio_tempfiles'})
+        and ref($self->{'_rootio_tempfiles'}) =~ /array/i
+        and not $self->save_tempfiles
+        ) {
         if( $v > 0 ) {
             warn( "going to remove files ",
-              join(",",  @{$self->{'_rootio_tempfiles'}}), "\n");
+                  join(",",  @{$self->{'_rootio_tempfiles'}}),
+                  "\n");
         }
         unlink  (@{$self->{'_rootio_tempfiles'}} );
     }
     # cleanup if we are not using File::Temp
-    if( $self->{'_cleanuptempdir'} &&
-      exists($self->{'_rootio_tempdirs'}) &&
-      ref($self->{'_rootio_tempdirs'}) =~ /array/i &&
-      !$self->save_tempfiles) {
+    if (    $self->{'_cleanuptempdir'}
+        and exists($self->{'_rootio_tempdirs'})
+        and ref($self->{'_rootio_tempdirs'}) =~ /array/i
+        and not $self->save_tempfiles
+        ) {
         if( $v > 0 ) {
             warn( "going to remove dirs ",
-              join(",",  @{$self->{'_rootio_tempdirs'}}), "\n");
+                  join(",",  @{$self->{'_rootio_tempdirs'}}),
+                  "\n");
         }
         $self->rmtree( $self->{'_rootio_tempdirs'});
     }
@@ -847,14 +874,13 @@ sub tempfile {
             # Reset umask
             umask($umask);
         } else {
-            $self->throw("Could not open tempfile $file: $!\n");
+            $self->throw("Could not write temporary file '$file': $!");
         }
     }
 
     if(  $params{'UNLINK'} ) {
         push @{$self->{'_rootio_tempfiles'}}, $file;
     }
-
 
     return wantarray ? ($tfh,$file) : $tfh;
 }
@@ -887,11 +913,12 @@ sub tempdir {
     my %params = @args;
     print "cleanup is " . $params{CLEANUP} . "\n";
     $self->{'_cleanuptempdir'} = ( defined $params{CLEANUP} &&
-                   $params{CLEANUP} == 1);
-    my $tdir = $self->catfile($TEMPDIR,
-                  sprintf("dir_%s-%s-%s",
-                      $ENV{USER} || 'unknown', $$,
-                      $TEMPCOUNTER++));
+                                   $params{CLEANUP} == 1);
+    my $tdir = $self->catfile( $TEMPDIR,
+                               sprintf("dir_%s-%s-%s",
+                                       $ENV{USER} || 'unknown',
+                                       $$,
+                                       $TEMPCOUNTER++));
     mkdir($tdir, 0755);
     push @{$self->{'_rootio_tempdirs'}}, $tdir;
     return $tdir;
@@ -999,13 +1026,13 @@ sub rmtree {
             # to recurse in which case we are better than rm -rf for
             # subtrees with strange permissions
             chmod(0777, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
-              or $self->warn("Can't make directory $root read+writable: $!")
+              or $self->warn("Could not make directory '$root' read+writable: $!")
             unless $safe;
-            if (opendir(DIR, $root) ){
+            if (opendir DIR, $root){
                 @files = readdir DIR;
                 closedir DIR;
             } else {
-                $self->warn( "Can't read $root: $!");
+                $self->warn("Could not read directory '$root': $!");
                 @files = ();
             }
 
@@ -1017,44 +1044,43 @@ sub rmtree {
             $count += $self->rmtree([@files],$verbose,$safe);
             if ($safe &&
               ($Is_VMS ? !&VMS::Filespec::candelete($root) : !-w $root)) {
-                print "skipped $root\n" if $verbose;
+                print "skipped '$root'\n" if $verbose;
                 next;
             }
             chmod 0777, $root
-              or $self->warn( "Can't make directory $root writable: $!")
+              or $self->warn("Could not make directory '$root' writable: $!")
               if $force_writable;
-            print "rmdir $root\n" if $verbose;
+            print "rmdir '$root'\n" if $verbose;
             if (rmdir $root) {
                 ++$count;
             }
             else {
-                $self->warn( "Can't remove directory $root: $!");
+                $self->warn("Could not remove directory '$root': $!");
                 chmod($rp, ($Is_VMS ? VMS::Filespec::fileify($root) : $root))
                   or $self->warn("and can't restore permissions to "
-                    . sprintf("0%o",$rp) . "\n");
+                                 . sprintf("0%o",$rp) . "\n");
             }
         }
         else {
-
-            if ($safe &&
-              ($Is_VMS ? !&VMS::Filespec::candelete($root)
-                       : !(-l $root || -w $root)))
-            {
-                print "skipped $root\n" if $verbose;
+            if (     $safe
+                and ($Is_VMS ? !&VMS::Filespec::candelete($root)
+                             : !(-l $root || -w $root))
+                ) {
+                print "skipped '$root'\n" if $verbose;
                 next;
             }
             chmod 0666, $root
-              or $self->warn( "Can't make file $root writable: $!")
+              or $self->warn( "Could not make file '$root' writable: $!")
               if $force_writable;
-            warn "unlink $root\n" if $verbose;
+            warn "unlink '$root'\n" if $verbose;
             # delete all versions under VMS
             for (;;) {
                 unless (unlink $root) {
-                    $self->warn( "Can't unlink file $root: $!");
+                    $self->warn("Could not unlink file '$root': $!");
                     if ($force_writable) {
                         chmod $rp, $root
                           or $self->warn("and can't restore permissions to "
-                          . sprintf("0%o",$rp) . "\n");
+                                         . sprintf("0%o",$rp) . "\n");
                     }
                     last;
                 }

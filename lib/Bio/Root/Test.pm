@@ -107,16 +107,17 @@ files. See test_input_file(), test_output_file() and test_output_dir().
     }
 
     sub Test::Warn::_diag_found_warning {
-        foreach (@_) {
-            if (ref($_) eq 'HASH') {
-                ${$_}{carped} ? $Tester->diag("found carped warning: ${$_}{carped}")
-                              : (${$_}{Bioperl} ? $Tester->diag("found Bioperl warning: ${$_}{Bioperl}")
-                                 : $Tester->diag("found warning: ${$_}{warn}"));
+        my @warns = @_;
+        foreach my $warn (@warns) {
+            if (ref($warn) eq 'HASH') {
+                   ${$warn}{carped}  ? $Tester->diag("found carped warning: ${$warn}{carped}")
+                : (${$warn}{Bioperl} ? $Tester->diag("found Bioperl warning: ${$warn}{Bioperl}")
+                : $Tester->diag("found warning: ${$warn}{warn}"));
             } else {
-                $Tester->diag( "found warning: $_" );
+                $Tester->diag( "found warning: $warn" );
             }
         }
-        $Tester->diag( "didn't find a warning" ) unless @_;
+        $Tester->diag( "didn't find a warning" ) unless @warns;
     }
 
     sub Test::Warn::_cmp_got_to_exp_warning {
@@ -203,7 +204,7 @@ sub test_begin {
             eval "plan skip_all => '$skip_all';";
         }
         elsif (defined $tests && $tests == 0) {
-            eval "plan skip_all => 'All tests are being skipped, probably because the module(s) being tested here are now deprecated';";
+            eval "plan skip_all => 'These modules are now probably deprecated';";
         }
         elsif ($tests) {
             eval "plan tests => $tests;";
