@@ -167,16 +167,14 @@ BEGIN {
     }
 
     # set up _dclone()
-    for my $class (qw(Clone::Fast Clone Storable)) {
+    for my $class (qw(Clone::Fast Clone)) {
         eval "require $class; 1;";
         if (!$@) {
             $CLONE_CLASS = $class;
             if ($class eq 'Clone::Fast') {
                 *Bio::Root::Root::_dclone = sub {shift; return Clone::Fast::clone(shift)};
-            } elsif ($class eq 'Clone') {
-                *Bio::Root::Root::_dclone = sub {shift; return Clone::clone(shift)};
             } else {
-                *Bio::Root::Root::_dclone = sub {shift; return Storable::dclone(shift)};
+                *Bio::Root::Root::_dclone = sub {shift; return Clone::clone(shift)};
             }
             last;
         }
